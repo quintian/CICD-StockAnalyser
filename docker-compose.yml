@@ -1,0 +1,41 @@
+services:
+  jenkins:
+    build:
+      context: ./jenkins
+    container_name: cicd-stockanalyser-jenkins
+    # Local lab shortcut: run as root so Jenkins can use /var/run/docker.sock
+    # to build and smoke-test the app image. Production should use a safer
+    # Docker agent or controlled socket permissions.
+    user: root
+    restart: unless-stopped
+    ports:
+      - "8086:8080"
+      - "50002:50000"
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    volumes:
+      - stockanalyser_jenkins_home:/var/jenkins_home
+      # Gives Jenkins access to this pipeline repo.
+      - ./:/workspace/cicd-stockanalyser:ro
+      # Gives Jenkins permission to build/run Docker images on your laptop.
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - cicd-stockanalyser
+
+  stockanalyser-target:
+    build:
+      context: ./ansible/target
+    container_name: cicd-stockanalyser-target
+    restart: unless-stopped
+    volumes:
+      # Lets the target run the app image on the same local Docker engine.
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - cicd-stockanalyser
+
+volumes:
+  stockanalyser_jenkins_home:
+
+networks:
+  cicd-stockanalyser:
+    name: cicd-stockanalyser

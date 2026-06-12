@@ -1,0 +1,43 @@
+---
+- name: Deploy StockAnalyser Docker image
+  hosts: stockanalyser_targets
+  gather_facts: false
+  become: true
+
+  vars:
+    app_container_name: stockanalyser-web
+    app_host_port: 8087
+    app_container_port: 8000
+
+  tasks:
+    - name: Confirm Docker is available on target
+      ansible.builtin.command: docker --version
+      changed_when: false
+
+    - name: Remove previous StockAnalyser app container
+      ansible.builtin.command: "docker rm -f {{ app_container_name }}"
+      register: remove_app
+      failed_when: remove_app.rc not in [0, 1]
+      changed_when: remove_app.rc == 0
+
+    - name: Start StockAnalyser app container
+      ansible.builtin.command: >
+        docker run -d
+        --name {{ app_container_name }}
+        --network cicd-stockanalyser
+        -p {{ app_host_port }}:{{ app_container_port }}
+        {{ stockanalyser_image }}
+
+    - name: Wait for StockAnalyser health endpoint
+      ansible.builtin.uri:
+        url: "http://{{ app_container_name }}:{{ app_container_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 30
+      delay: 2
+      until: health_check.status == 200
+
+    - name: Show deployed app URL
+      ansible.builtin.debug:
+        msg: "StockAnalyser deployed at http://localhost:{{ app_host_port }}"
