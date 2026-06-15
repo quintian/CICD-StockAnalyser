@@ -1,3 +1,5 @@
+Copyright © 2026 Quinn Tian. All rights reserved. Personal and educational use is permitted with proper attribution. Commercial use, redistribution, or modification requires a paid commercial license.
+
 This project creates a Jenkins CI pipeline for the StockAnalyser Flask app.
 
 Application source:
@@ -58,6 +60,21 @@ click 'Build with Parameters' on the left side and check:
 APP_REPO=https://github.com/quintian/StockAnalyser-Web.git
 APP_BRANCH=main
 SMOKE_TEST_IMAGE=true
+
+- last step run check 'deploy' too after ansible is configured.
+- open in browser and check: 
+
+Jenkins smoke test:
+Temporary internal container on port 8000
+
+Ansible-deployed app:
+http://localhost:8087
+### Below is for web brower of the old App without UI
+http://localhost:8087/health
+http://localhost:8087/analyze?ticker=NVDA
+http://localhost:8087/company-info?ticker=NVDA&index=NASDAQ
+
+- input stock ticker, choose Market dropdown, check 'include ocmpany information', click 'Analyze stock'
 
 ## check error logs on Jenkins webpage
 click on the red sqaure and see the error message on the top
